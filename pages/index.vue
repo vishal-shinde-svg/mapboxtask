@@ -1,6 +1,47 @@
 <template>
   <main class="w-screen h-screen">
-    <v-map class="w-full h-full" :options="state.map" @loaded="onMapLoaded" />
+    <v-map class="w-full h-full" :options="state.map" @loaded="onMapLoaded">
+      <div id="menu">
+        <select id="layer-change">
+          <option
+            id="satellite-v9"
+            type="checkbox"
+            name="style1"
+            value="satellite-v9"
+            checked="checked"
+          >
+            satellite
+          </option>
+          <option id="dark-v10" type="checkbox" name="style2" value="dark-v10">
+            dark
+          </option>
+          <option
+            id="light-v10"
+            type="checkbox"
+            name="style3"
+            value="light-v10"
+          >
+            light
+          </option>
+          <option
+            id="streets-v11"
+            type="checkbox"
+            name="style4"
+            value="streets-v11"
+          >
+            streets
+          </option>
+          <option
+            id="outdoors-v11"
+            type="checkbox"
+            name="style5"
+            value="outdoors-v11"
+          >
+            outdoors
+          </option>
+        </select>
+      </div>
+    </v-map>
   </main>
 </template>
 <script setup lang="ts">
@@ -96,31 +137,65 @@ function onMapLoaded(map) {
       trackUserLocation: true,
       showUserHeading: true,
     })
-  )
-  // add layer
-// const myScatterplotLayer = new MapboxLayer({
-//   id: 'my-scatterplot',
-//   type: ScatterplotLayer,
-//   data: [
-//       {position: [-74.5, 40], size: 100}
-//   ],
-//   getPosition: d => d.position,
-//   getRadius: d => d.size,
-//   getColor: [255, 0, 0]
-// });
+  ),
+    map.addLayer({
+      id: "points-of-interest",
+      source: {
+        type: "vector",
+        url: "mapbox://mapbox.mapbox-streets-v8",
+      },
+      "source-layer": "poi_label",
+      type: "circle",
+      paint: {
+        // Mapbox Style Specification paint properties
+      },
+      layout: {
+        // Mapbox Style Specification layout properties
+      },
+    }),
+    map.on("load", () => {
+      const layers1 = map.getStyle().layers;
+      // Find the index of the first symbol layer in the map style.
+      let firstSymbolId;
+      for (const layer of layers1) {
+        if (layer.type === "symbol") {
+          firstSymbolId = layer.id;
+          break;
+        }
+      }
 
-// // wait for map to be ready
-// map.on('load', () => {
-//   // insert before the mapbox layer "waterway_label"
-//   map.addLayer(myScatterplotLayer, 'waterway_label');
+      map.addSource("urban-areas", {
+        type: "geojson",
+        data: "https://docs.mapbox.com/mapbox-gl-js/assets/ne_50m_urban_areas.geojson",
+      });
+      map.addLayer(
+        {
+          id: "urban-areas-fill",
+          type: "fill",
+          source: "urban-areas",
+          layout: {},
+          paint: {
+            "fill-color": "#f08",
+            "fill-opacity": 0.4,
+          },
+          // This is the important part of this example: the addLayer
+          // method takes 2 arguments: the layer as an object, and a string
+          // representing another layer's name. If the other layer
+          // exists in the style already, the new layer will be positioned
+          // right before that layer in the stack, making it possible to put
+          // 'overlays' anywhere in the layer stack.
+          // Insert the layer beneath the first symbol layer.
+        },
+        firstSymbolId
+      );
+    });
 
-//   // update the layer
-//   myScatterplotLayer.setProps({
-//     getColor: [0, 0, 255]
-//   });
-// });
-
-
+  const layerToggle: any = document.getElementById("layer-change");
+  // console.log(layerToggle.options[layerToggle.selectedIndex].value);
+  layerToggle.addEventListener("change", (event) => {
+    console.log(event);
+    map.setStyle("mapbox://styles/mapbox/" + event.target.value);
+  });
 }
 </script>
 <style>
