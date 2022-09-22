@@ -10,6 +10,9 @@
     <!-- <div id="map"></div> -->
     <v-map class="w-full h-full" :options="state.map" @loaded="onMap">
       <div id="menu">
+        <div class="pre">
+          <pre id="info"></pre>
+        </div>
         <select id="layer-change">
           <option
             id="satellite-v9"
@@ -151,15 +154,17 @@ async function onMap(map: mapboxgl.Map) {
     },
   });
 
-  // map.addControl(
-  //   new mapboxgl.GeolocateControl({
-  //     positionOptions: {
-  //       enableHighAccuracy: true,
-  //     },
-  //     trackUserLocation: true,
-  //     showUserHeading: true,
-  //   })
-  // );
+  //---------------------current location-------------------
+
+  map.addControl(
+    new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      trackUserLocation: true,
+      showUserHeading: true,
+    })
+  );
 
   //if you click add marker..............................................
 
@@ -199,7 +204,7 @@ async function onMap(map: mapboxgl.Map) {
   allStude.mapData.map((ele) => {
     new mapboxgl.Marker({
       draggable: true,
-      color: "red",
+      color:  "#" + (Math.random().toString(16) + "000000").substring(2, 8),
     })
       .setLngLat([ele.lat, ele.lon])
       .addTo(map);
@@ -230,7 +235,7 @@ async function onMap(map: mapboxgl.Map) {
       "line-cap": "round",
     },
     paint: {
-      "line-color": "green",
+      "line-color": "red",
       "line-width": 1,
       "line-opacity": 1,
     },
@@ -245,10 +250,22 @@ async function onMap(map: mapboxgl.Map) {
       "fill-opacity": 0.5,
     },
   });
-  //Draw tool
+
+
+  //.........................Draw tool...............
   var Draw = new MapboxDraw();
   map.addControl(Draw, "top-right");
-  //Draw tool end
+
+  map.on("mousemove", (e) => {
+    document.getElementById("info").innerHTML =
+      // `e.point` is the x, y coordinates of the `mousemove` event
+      // relative to the top-left corner of the map.
+      JSON.stringify(e.point) +
+      "<br />" +
+      // `e.lngLat` is the longitude, latitude geographical position of the event.
+      JSON.stringify(e.lngLat.wrap());
+  });
+
 }
 </script>
 <style>
@@ -278,5 +295,15 @@ body {
 .mapboxgl-popup {
   max-width: 400px;
   font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.pre {
+  z-index: 1;
+  position: relative;
+
+  left: 600px;
+  width: 40%;
+  height: 9%;
+  background-color: white;
+  top: 0;
 }
 </style>
